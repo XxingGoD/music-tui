@@ -61,11 +61,12 @@ fn probe_track(path: PathBuf) -> LocalTrack {
         .arg(&path)
         .output();
 
-    if let Ok(output) = output
-        && output.status.success()
-        && let Ok(json) = serde_json::from_slice::<Value>(&output.stdout)
-    {
-        return track_from_probe(path, &json);
+    if let Ok(output) = output {
+        if output.status.success() {
+            if let Ok(json) = serde_json::from_slice::<Value>(&output.stdout) {
+                return track_from_probe(path, &json);
+            }
+        }
     }
 
     fallback_track(path)

@@ -1,4 +1,5 @@
 use std::{
+    collections::HashMap,
     fs,
     path::{Path, PathBuf},
 };
@@ -6,12 +7,14 @@ use std::{
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Deserialize, Serialize)]
+#[serde(default)]
 pub struct AppConfig {
     pub music_dir: PathBuf,
     pub helper_path: PathBuf,
     pub default_sources: Vec<String>,
     pub embed_cover: bool,
     pub embed_lyrics: bool,
+    pub source_cookies: HashMap<String, String>,
 }
 
 impl AppConfig {
@@ -43,7 +46,7 @@ impl Default for AppConfig {
     fn default() -> Self {
         Self {
             music_dir: home_dir().join("Music"),
-            helper_path: PathBuf::from("helper/music-dl-helper"),
+            helper_path: PathBuf::from("helper").join(helper_binary_name()),
             default_sources: vec![
                 "netease".to_string(),
                 "qq".to_string(),
@@ -55,6 +58,7 @@ impl Default for AppConfig {
             ],
             embed_cover: true,
             embed_lyrics: true,
+            source_cookies: HashMap::new(),
         }
     }
 }
@@ -86,14 +90,36 @@ pub fn resolve_helper_path(path: &Path) -> PathBuf {
         candidates.push(exe_dir.join("..").join("..").join(path));
     }
 
-    candidates
-        .into_iter()
-        .find(|candidate| candidate.exists())
-        .unwrap_or_else(|| path.to_path_buf())
+    for candidate in candidates {
+        if candidate.exists() {
+            return candidate;
+        }
+        #[cfg(target_os = "windows")]
+        {
+            if candidate.extension().is_none() {
+                let windows_candidate = candidate.with_extension("exe");
+                if windows_candidate.exists() {
+                    return windows_candidate;
+                }
+            }
+        }
+    }
+
+    path.to_path_buf()
 }
 
 fn home_dir() -> PathBuf {
     std::env::var_os("HOME")
         .map(PathBuf::from)
         .unwrap_or_else(|| PathBuf::from("."))
+}
+
+#[cfg(target_os = "windows")]
+fn helper_binary_name() -> &'static str {
+    "music-dl-helper.exe"
+}
+
+#[cfg(not(target_os = "windows"))]
+fn helper_binary_name() -> &'static str {
+    "music-dl-helper"
 }

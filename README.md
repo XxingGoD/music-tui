@@ -1,9 +1,9 @@
 # Music TUI
 
-`Music TUI` 是一个合并版终端音乐工具：
+`Music TUI` 是一个独立的终端音乐工具：
 
 - Rust 负责 TUI、卡片式面板、本地曲库扫描、播放控制和歌词展示。
-- Go helper 直接复用 `go-music-dl` 源码里的 `core` 包，负责多平台搜索、下载、歌词获取。
+- Go helper 直接调用 `music-lib` 的各音乐源 provider，负责多平台搜索、下载、歌词获取。
 - 默认下载目录为 `~/Music`。
 
 ## 功能
@@ -24,10 +24,8 @@ music-tui/
 ├── src/                    # TUI、扫描、播放、歌词、helper 调用
 ├── helper/
 │   ├── go.mod              # Go helper 模块
-│   └── main.go             # 调用 go-music-dl/core 的 CLI helper
+│   └── main.go             # 内置多音乐源搜索/下载/歌词 helper
 └── README.md
-
-../go-music-dl-src/         # go-music-dl 源码，helper 通过 replace 引用
 ```
 
 ## 依赖
@@ -52,14 +50,14 @@ sudo apt install ffmpeg
 先构建 Go helper：
 
 ```bash
-cd /home/starlight/CODE/music-tool/music-tui/helper
+cd helper
 go build -buildvcs=false -o music-dl-helper .
 ```
 
 再构建或运行 Rust TUI：
 
 ```bash
-cd /home/starlight/CODE/music-tool/music-tui
+cd ..
 cargo build
 cargo run
 ```
@@ -80,6 +78,10 @@ helper_path = "helper/music-dl-helper"
 default_sources = ["netease", "qq", "kugou", "kuwo", "migu", "qianqian", "soda"]
 embed_cover = true
 embed_lyrics = true
+
+[source_cookies]
+# qq = "uin=...; qm_keyst=..."
+# soda = "sessionid=..."
 ```
 
 - `music_dir`：本地曲库和下载目录。
@@ -87,13 +89,13 @@ embed_lyrics = true
 - `default_sources`：默认搜索源。
 - `embed_cover`：下载时尝试写入封面元数据。
 - `embed_lyrics`：下载时尝试写入歌词元数据，同时保存同名 `.lrc`。
+- `source_cookies`：需要登录态的音乐源 cookie，按源名填写。
 
 ## 使用
 
 启动：
 
 ```bash
-cd /home/starlight/CODE/music-tool/music-tui
 cargo run
 ```
 
@@ -157,7 +159,7 @@ lyric fetch failed: lyric is empty or not found
 如果 TUI 显示找不到 helper：
 
 ```bash
-cd /home/starlight/CODE/music-tool/music-tui/helper
+cd helper
 go build -buildvcs=false -o music-dl-helper .
 ```
 
@@ -177,8 +179,14 @@ go build -buildvcs=false -o music-dl-helper .
 - 默认下载到 `~/Music`。
 - 按 `r` 刷新本地曲库。
 
+如果某些源搜索/下载失败：
+
+- 先确认该源本身是否可用。
+- 对需要登录态的源，在 `~/.config/music-tui/config.toml` 的 `[source_cookies]` 中填写 cookie。
+
 ## 已知限制
 
 - 卡片封面区域目前使用来源占位，不渲染真实网络封面图。
 - 真实图片渲染需要 Kitty/Sixel/iTerm2 等终端图片协议支持，后续可继续接入。
 - 搜索和歌词能力取决于各音乐源接口，部分歌曲可能没有可下载歌词。
+- 目前没有内置 cookie 管理 UI，需要手动编辑配置文件。

@@ -1,9 +1,9 @@
 use ratatui::{
-    Frame,
     layout::{Alignment, Constraint, Direction, Layout, Rect},
     style::{Color, Modifier, Style},
     text::{Line, Span},
     widgets::{Block, BorderType, Borders, Clear, Paragraph, Wrap},
+    Frame,
 };
 
 use crate::{
@@ -63,7 +63,7 @@ fn render_wallpaper(frame: &mut Frame, area: Rect) {
 
 fn render_sidebar(frame: &mut Frame, area: Rect, app: &App) {
     let items = [
-        ("▌", "Music TUI", "Rust + go-music-dl"),
+        ("▌", "Music TUI", "Rust + standalone helper"),
         ("⌂", "首页", "本地曲库"),
         ("⌕", "搜索", "在线下载"),
         ("♫", "歌词", "同步显示"),
@@ -450,7 +450,7 @@ fn render_busy(frame: &mut Frame, area: Rect) {
     let popup = centered_rect(42, 5, area);
     frame.render_widget(Clear, popup);
     frame.render_widget(
-        Paragraph::new("任务执行中...\n搜索/下载由 go-music-dl core 处理")
+        Paragraph::new("任务执行中...\n搜索/下载由内置 helper 处理")
             .alignment(Alignment::Center)
             .block(
                 Block::default()

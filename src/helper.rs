@@ -5,19 +5,22 @@ use std::{
 };
 
 use crate::{
-    config::{AppConfig, resolve_helper_path},
+    config::{resolve_helper_path, AppConfig},
     models::{DownloadResponse, RemoteSong, SearchResponse},
 };
 
 #[derive(Debug, Clone)]
 pub struct MusicDl {
     helper_path: PathBuf,
+    source_cookies_json: String,
 }
 
 impl MusicDl {
     pub fn new(config: &AppConfig) -> Self {
         Self {
             helper_path: resolve_helper_path(&config.helper_path),
+            source_cookies_json: serde_json::to_string(&config.source_cookies)
+                .unwrap_or_else(|_| "{}".to_string()),
         }
     }
 
@@ -93,6 +96,7 @@ impl MusicDl {
     {
         let output = Command::new(&self.helper_path)
             .args(args)
+            .env("MUSIC_TUI_SOURCE_COOKIES", &self.source_cookies_json)
             .output()
             .map_err(|err| format!("failed to run {}: {err}", self.helper_path.display()))?;
 

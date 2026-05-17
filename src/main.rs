@@ -14,9 +14,9 @@ use config::AppConfig;
 use crossterm::{
     event::{self, Event, KeyCode},
     execute,
-    terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode},
+    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
-use ratatui::{Terminal, backend::CrosstermBackend};
+use ratatui::{backend::CrosstermBackend, Terminal};
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     if std::env::args().nth(1).as_deref() == Some("download-test") {
@@ -80,48 +80,49 @@ fn run_app(
         app.process_worker_events();
         terminal.draw(|frame| ui::render(frame, app))?;
 
-        if event::poll(Duration::from_millis(100))?
-            && let Event::Key(key) = event::read()?
-        {
-            match key.code {
-                KeyCode::Char('q') => break,
-                KeyCode::Tab => {
-                    app.focus = if app.focus == Focus::Library {
-                        Focus::Search
-                    } else {
-                        Focus::Library
-                    };
-                }
-                KeyCode::Left | KeyCode::Char('h') => app.move_left(),
-                KeyCode::Right | KeyCode::Char('l') => app.move_right(),
-                KeyCode::Up | KeyCode::Char('k') => app.move_up(card_columns()?),
-                KeyCode::Down | KeyCode::Char('j') => app.move_down(card_columns()?),
-                KeyCode::Enter => {
-                    if app.focus == Focus::Library {
-                        app.play_selected_local();
-                    } else {
-                        app.search();
+        if event::poll(Duration::from_millis(100))? {
+            let event = event::read()?;
+            if let Event::Key(key) = event {
+                match key.code {
+                    KeyCode::Char('q') => break,
+                    KeyCode::Tab => {
+                        app.focus = if app.focus == Focus::Library {
+                            Focus::Search
+                        } else {
+                            Focus::Library
+                        };
                     }
-                }
-                KeyCode::Char('d') => app.download_selected(),
-                KeyCode::Char('a') => app.toggle_search_mode(),
-                KeyCode::Char('p') => app.play_selected_local(),
-                KeyCode::Char('s') => {
-                    app.player.stop();
-                    app.status = "已停止播放".to_string();
-                }
-                KeyCode::Char('r') => app.refresh_library(),
-                KeyCode::Backspace => {
-                    if app.focus == Focus::Search {
-                        app.query.pop();
+                    KeyCode::Left | KeyCode::Char('h') => app.move_left(),
+                    KeyCode::Right | KeyCode::Char('l') => app.move_right(),
+                    KeyCode::Up | KeyCode::Char('k') => app.move_up(card_columns()?),
+                    KeyCode::Down | KeyCode::Char('j') => app.move_down(card_columns()?),
+                    KeyCode::Enter => {
+                        if app.focus == Focus::Library {
+                            app.play_selected_local();
+                        } else {
+                            app.search();
+                        }
                     }
-                }
-                KeyCode::Char(c) => {
-                    if app.focus == Focus::Search {
-                        app.query.push(c);
+                    KeyCode::Char('d') => app.download_selected(),
+                    KeyCode::Char('a') => app.toggle_search_mode(),
+                    KeyCode::Char('p') => app.play_selected_local(),
+                    KeyCode::Char('s') => {
+                        app.player.stop();
+                        app.status = "已停止播放".to_string();
                     }
+                    KeyCode::Char('r') => app.refresh_library(),
+                    KeyCode::Backspace => {
+                        if app.focus == Focus::Search {
+                            app.query.pop();
+                        }
+                    }
+                    KeyCode::Char(c) => {
+                        if app.focus == Focus::Search {
+                            app.query.push(c);
+                        }
+                    }
+                    _ => {}
                 }
-                _ => {}
             }
         }
     }
