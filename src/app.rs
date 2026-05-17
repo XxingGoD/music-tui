@@ -7,7 +7,7 @@ use ratatui::widgets::ListState;
 
 use crate::{
     config::AppConfig,
-    helper::MusicDl,
+    helper::{MusicDl, SearchResult},
     lyrics::load_lyrics,
     models::{DownloadResponse, LocalTrack, LyricLine, RemoteSong},
     player::Player,
@@ -52,7 +52,7 @@ impl SearchMode {
 #[derive(Debug)]
 pub enum WorkerEvent {
     LibraryScanned(Vec<LocalTrack>),
-    SearchFinished(Result<Vec<RemoteSong>, String>),
+    SearchFinished(Result<SearchResult, String>),
     DownloadFinished(Result<DownloadResponse, String>),
 }
 
@@ -209,14 +209,16 @@ impl App {
                 WorkerEvent::SearchFinished(result) => {
                     self.busy = false;
                     match result {
-                        Ok(songs) => {
-                            let count = songs.len();
-                            self.search_results = songs;
+                        Ok(search) => {
+                            let count = search.songs.len();
+                            self.search_results = search.songs;
                             if count > 0 {
                                 self.search_state.select(Some(0));
+                            } else {
+                                self.search_state.select(None);
                             }
                             self.status =
-                                format!("{}搜索完成: {count} 条结果", self.search_mode.label());
+                                search_status(self.search_mode.label(), count, &search.warnings);
                         }
                         Err(err) => {
                             self.search_results.clear();
@@ -331,4 +333,28 @@ impl App {
 
         (self.search_mode, query.to_string())
     }
+}
+
+fn search_status(label: &str, count: usize, warnings: &[String]) -> String {
+    if count == 0 && !warnings.is_empty() {
+        return format!("{label}搜索失败: {}", warnings.join(" | "));
+    }
+
+    let mut status = format!("{label}搜索完成: {count} 条结果");
+    if !warnings.is_empty() {
+        let preview = warnings
+            .iter()
+            .take(2)
+            .cloned()
+            .collect::<Vec<_>>()
+            .join(" | ");
+        let suffix = if warnings.len() > 2 {
+            format!("{preview} 等 {} 个源失败", warnings.len())
+        } else {
+            preview
+        };
+        status.push_str(" | 部分源失败: ");
+        status.push_str(&suffix);
+    }
+    status
 }

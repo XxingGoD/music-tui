@@ -28,6 +28,8 @@ pub struct RemoteSong {
 #[derive(Debug, Clone, Deserialize)]
 pub struct SearchResponse {
     pub songs: Vec<RemoteSong>,
+    #[serde(default)]
+    pub warnings: Vec<String>,
 }
 
 #[derive(Debug, Clone, Deserialize)]

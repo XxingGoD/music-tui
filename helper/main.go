@@ -119,7 +119,8 @@ type songDTO struct {
 }
 
 type searchResponse struct {
-	Songs []songDTO `json:"songs"`
+	Songs    []songDTO `json:"songs"`
+	Warnings []string  `json:"warnings,omitempty"`
 }
 
 type downloadResponse struct {
@@ -179,6 +180,7 @@ func searchCmd(args []string, cookies cookieStore) {
 
 	var songs []model.Song
 	var mu sync.Mutex
+	var warnings []string
 
 	if strings.HasPrefix(query, "http://") || strings.HasPrefix(query, "https://") {
 		source := detectSource(query)
@@ -222,6 +224,9 @@ func searchCmd(args []string, cookies cookieStore) {
 				defer wg.Done()
 				result, err := searchSongs(src, query, cookies)
 				if err != nil {
+					mu.Lock()
+					warnings = append(warnings, formatSourceWarning(src, err))
+					mu.Unlock()
 					return
 				}
 				for i := range result {
@@ -243,7 +248,10 @@ func searchCmd(args []string, cookies cookieStore) {
 		songs = songs[:*limit]
 	}
 
-	writeJSON(searchResponse{Songs: mapSongs(songs)})
+	writeJSON(searchResponse{
+		Songs:    mapSongs(songs),
+		Warnings: warnings,
+	})
 }
 
 func filterByArtist(songs []model.Song, artist string) []model.Song {
@@ -453,6 +461,15 @@ func sourceDescription(source string) string {
 		return desc
 	}
 	return "未知音乐源"
+}
+
+func formatSourceWarning(source string, err error) string {
+	label := sourceDescription(source)
+	detail := strings.TrimSpace(err.Error())
+	if detail == "" {
+		detail = "unknown error"
+	}
+	return fmt.Sprintf("%s(%s): %s", label, source, detail)
 }
 
 func detectSource(link string) string {

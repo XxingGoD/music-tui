@@ -10,6 +10,12 @@ use crate::{
 };
 
 #[derive(Debug, Clone)]
+pub struct SearchResult {
+    pub songs: Vec<RemoteSong>,
+    pub warnings: Vec<String>,
+}
+
+#[derive(Debug, Clone)]
 pub struct MusicDl {
     helper_path: PathBuf,
     source_cookies_json: String,
@@ -37,7 +43,7 @@ impl MusicDl {
         keyword: &str,
         mode: &str,
         sources: &[String],
-    ) -> Result<Vec<RemoteSong>, String> {
+    ) -> Result<SearchResult, String> {
         let mut args = vec![
             OsString::from("search"),
             OsString::from("--keyword"),
@@ -54,7 +60,10 @@ impl MusicDl {
         }
 
         let response: SearchResponse = self.run_json(args)?;
-        Ok(response.songs)
+        Ok(SearchResult {
+            songs: response.songs,
+            warnings: response.warnings,
+        })
     }
 
     pub fn download(
