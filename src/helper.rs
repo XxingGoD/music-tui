@@ -79,6 +79,8 @@ impl MusicDl {
             OsString::from(&song.album),
             OsString::from("--cover-url"),
             OsString::from(&song.cover),
+            OsString::from("--url"),
+            OsString::from(&song.url),
             OsString::from(format!("--cover={cover}")),
             OsString::from(format!("--lyrics={lyrics}")),
             OsString::from("--outdir"),

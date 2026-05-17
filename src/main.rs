@@ -58,6 +58,7 @@ fn run_download_test() -> Result<(), Box<dyn std::error::Error>> {
         source: "netease".to_string(),
         ext: String::new(),
         cover: String::new(),
+        url: String::new(),
         extra: HashMap::from([("song_id".to_string(), "3378803529".to_string())]),
         is_vip: false,
     };

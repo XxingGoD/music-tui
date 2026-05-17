@@ -276,6 +276,7 @@ func downloadCmd(args []string, cookies cookieStore) {
 	artist := fs.String("artist", "Unknown", "song artist")
 	album := fs.String("album", "", "song album")
 	coverURL := fs.String("cover-url", "", "cover URL")
+	urlStr := fs.String("url", "", "song download URL")
 	outDir := fs.String("outdir", "", "output directory")
 	withCover := fs.Bool("cover", true, "embed cover when possible")
 	withLyrics := fs.Bool("lyrics", true, "embed lyrics when possible")
@@ -299,6 +300,7 @@ func downloadCmd(args []string, cookies cookieStore) {
 		Name:   strings.TrimSpace(*name),
 		Artist: strings.TrimSpace(*artist),
 		Album:  strings.TrimSpace(*album),
+		URL:    strings.TrimSpace(*urlStr),
 		Cover:  strings.TrimSpace(*coverURL),
 		Extra:  extra,
 	}

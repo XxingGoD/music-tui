@@ -18,6 +18,8 @@ pub struct RemoteSong {
     #[serde(default)]
     pub cover: String,
     #[serde(default)]
+    pub url: String,
+    #[serde(default)]
     pub extra: HashMap<String, String>,
     #[serde(default)]
     pub is_vip: bool,
